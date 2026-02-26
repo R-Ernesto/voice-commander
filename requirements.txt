@@ -1,0 +1,7 @@
+faster-whisper>=1.1.0
+sounddevice>=0.5.0
+numpy>=1.24
+keyboard>=0.13.5
+requests>=2.31
+pyperclip>=1.9
+colorama>=0.4.6
