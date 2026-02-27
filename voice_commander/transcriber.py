@@ -20,6 +20,7 @@ class TranscriptionResult:
 
 
 _model: WhisperModel | None = None
+transcribe_lock = threading.Lock()
 
 
 def _get_model() -> WhisperModel:
@@ -79,19 +80,54 @@ def transcribe(audio: np.ndarray, sample_rate: int = 16000) -> TranscriptionResu
     model = _get_model()
     audio_duration = len(audio) / sample_rate
 
-    t0 = time.perf_counter()
-    segments, info = model.transcribe(
-        audio,
-        language=None,
-        initial_prompt=cfg["whisper_initial_prompt"],
-        vad_filter=True,
-    )
-    text = " ".join(seg.text.strip() for seg in segments)
-    latency_ms = int((time.perf_counter() - t0) * 1000)
+    with transcribe_lock:
+        t0 = time.perf_counter()
+        segments, info = model.transcribe(
+            audio,
+            language=None,
+            initial_prompt=cfg["whisper_initial_prompt"],
+            vad_filter=True,
+        )
+        text = " ".join(seg.text.strip() for seg in segments)
+        latency_ms = int((time.perf_counter() - t0) * 1000)
 
     return TranscriptionResult(
         text=text.strip(),
         language=info.language,
         audio_duration_sec=round(audio_duration, 2),
+        latency_ms=latency_ms,
+    )
+
+
+def transcribe_file(
+    file_path: str,
+    language: str | None = None,
+    task: str = "transcribe",
+) -> TranscriptionResult:
+    """Transcribe an audio file (M4A, OGG, WAV, etc.) to text.
+
+    faster-whisper accepts file paths directly and decodes via ffmpeg.
+    Thread-safe: acquires transcribe_lock during inference.
+    """
+    cfg = load_config()
+    model = _get_model()
+    lang = language if language and language not in ("auto", "") else None
+
+    with transcribe_lock:
+        t0 = time.perf_counter()
+        segments, info = model.transcribe(
+            file_path,
+            language=lang,
+            task=task,
+            initial_prompt=cfg["whisper_initial_prompt"],
+            vad_filter=True,
+        )
+        text = " ".join(seg.text.strip() for seg in segments)
+        latency_ms = int((time.perf_counter() - t0) * 1000)
+
+    return TranscriptionResult(
+        text=text.strip(),
+        language=info.language,
+        audio_duration_sec=round(info.duration, 2),
         latency_ms=latency_ms,
     )

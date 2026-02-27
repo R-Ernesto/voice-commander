@@ -97,6 +97,12 @@ DEFAULTS = {
         "- For SQL queries, wrap in sqlcmd or Invoke-Sqlcmd"
     ),
 
+    # HTTP Server (remote STT for Android / other clients)
+    "http_enabled": False,
+    "http_host": "0.0.0.0",
+    "http_port": 9090,
+    "http_max_content_mb": 25,
+
     # Execution
     "exec_timeout": 30,
 

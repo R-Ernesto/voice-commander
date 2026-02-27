@@ -50,8 +50,7 @@ def _clear_line():
         sys.stdout.flush()
 
 
-def _print_banner():
-    cfg = load_config()
+def _print_banner(cfg: dict):
     w = 52
     print()
     print(f"{CYN}{'~' * w}{R}")
@@ -60,6 +59,8 @@ def _print_banner():
     print()
     print(f"  {DIM}STT{R}  {cfg['whisper_model']}  {DIM}(faster-whisper){R}")
     print(f"  {DIM}LLM{R}  {cfg['ollama_model']}  {DIM}(Ollama){R}")
+    if cfg.get("http_enabled"):
+        print(f"  {DIM}HTTP{R} :{cfg['http_port']}  {DIM}(remote STT){R}")
     print()
     print(f"  {B}Ctrl+Alt+V{R}  {DIM}comando{R}   voz -> terminal")
     print(f"  {B}Ctrl+Alt+T{R}  {DIM}texto{R}     voz -> clipboard")
@@ -227,8 +228,13 @@ def main():
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"\n{DIM}--- session {ts} ---{R}")
 
-    _print_banner()
+    cfg = load_config()
+    _print_banner(cfg)
     warmup()
+
+    if cfg.get("http_enabled"):
+        from .http_server import start_server
+        start_server(cfg)
 
     recorder = Recorder()
     _waiting()

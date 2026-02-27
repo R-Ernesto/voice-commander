@@ -12,6 +12,7 @@ setup(
         "requests>=2.31",
         "pyperclip>=1.9",
         "colorama>=0.4.6",
+        "flask>=3.0.0",
     ],
     entry_points={
         "console_scripts": [
